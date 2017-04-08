@@ -74,7 +74,7 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'dzget=deezermp3:dzget:main',
+            'dzget=deezermp3:main',
         ],
     },
 )
