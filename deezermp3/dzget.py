@@ -60,7 +60,7 @@ class DeezerMP3(object):
                 self.log(' > Url: %s' % videos[0])
                 ydl.download(["http://www.youtube.com%s" % videos[0]])
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="DeezerMP3 downloader")
     parser.add_argument('-p',
                         '--playlist',
@@ -112,3 +112,6 @@ if __name__ == "__main__":
         dmp3.download_playlist(args.url)
     else:
         parser.error('invalid mode')
+        
+if __name__ == "__main__":
+    main()
