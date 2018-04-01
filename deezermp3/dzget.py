@@ -6,7 +6,7 @@ import requests
 from youtube_dl import YoutubeDL
 
 
-API_URL = "https://api.deezer.com/playlist/"
+API_URL = "https://api.deezer.com"
 
 
 class DeezerMP3(object):
@@ -14,23 +14,38 @@ class DeezerMP3(object):
         self.dirout = os.path.realpath(dirout or os.path.join(os.getcwd(), os.path.dirname(__file__)))
         self.quality = quality
         self.format = format
+        self.regexp_video = re.compile(r'(/watch\?[^\"]+)', re.I | re.M | re.U)
 
     def log(self, data):
         print(data)
 
+    def urls_gen(self, data):
+        self.log('## Fetching video urls...')
+        for item in data['tracks']['data']:
+            name = '%s - %s' % (item['artist']['name'], item['title'])
+            self.log("## Searching for %s" % name)
+            yres = requests.get('https://m.youtube.com/results?search_query=%s' % name)
+            search_res = yres.content.decode('utf-8')
+            videos = self.regexp_video.findall(search_res)
+            if not videos:
+                self.log(' > Not found')
+                continue
+            url = "http://www.youtube.com%s" % videos[0]
+            self.log(' > Url: %s' % url)
+            yield url
+
     def download_playlist(self, url):
-        plid = url.strip().split('/')[-1]
-        url = API_URL + plid
+        parts = url.strip().split('/')
+        list_type, playlist_id = parts[-2:]
+
+        url = os.path.join(API_URL, list_type, playlist_id)
 
         res = requests.get(url)
         data = res.json()
-
         pl_name = data['title']
         dir_path = os.path.join(self.dirout, pl_name)
         if not os.path.exists(dir_path):
             os.mkdir(dir_path)
-
-        regexp_video = re.compile(r'(/watch\?[^\"]+)', re.I | re.M | re.U)
 
         postprocessors = [{
             'key': 'FFmpegExtractAudio',
@@ -46,18 +61,7 @@ class DeezerMP3(object):
         }
 
         with YoutubeDL(options) as ydl:
-            for item in data['tracks']['data']:
-                name = '%s - %s' % (item['artist']['name'], item['title'])
-
-                self.log("\n## Parsing: %s" % name)
-                yres = requests.get('https://m.youtube.com/results?search_query=%s' % name)
-                data = yres.content.decode('utf-8')
-                videos = regexp_video.findall(data)
-                if not videos:
-                    self.log(' > Not found')
-                    continue
-                self.log(' > Url: %s' % videos[0])
-                ydl.download(["http://www.youtube.com%s" % videos[0]])
+            ydl.download(list(self.urls_gen(data)))
 
 
 def get_args():
@@ -87,7 +91,7 @@ def get_args():
                              'between 0 (better) and 9 (worse) for VBR or a specific '
                              'bitrate like 128K (default 5)')
 
-    parser.add_argument('url', metavar='url', type=str,
+    parser.add_argument('urls', metavar='urls', type=str, nargs='+',
                         help='Playlist urls or ids')
 
     args = parser.parse_args()
@@ -112,7 +116,8 @@ def main():
         quality=args.audio_quality,
         format=args.audio_format)
 
-    dmp3.download_playlist(args.url)
+    for url in args.urls:
+        dmp3.download_playlist(url)
 
 
 if __name__ == "__main__":
