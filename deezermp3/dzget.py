@@ -62,10 +62,6 @@ class DeezerMP3(object):
 
 def get_args():
     parser = argparse.ArgumentParser(description="DeezerMP3 downloader")
-    parser.add_argument('-p',
-                        '--playlist',
-                        action='store_true',
-                        help='Download by playlist url.')
 
     parser.add_argument('-f',
                         '--audio-format',
