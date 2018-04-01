@@ -70,10 +70,10 @@ def get_args():
     parser.add_argument('-f',
                         '--audio-format',
                         metavar='format',
-                        default='best',
+                        default='mp3',
                         type=str,
                         help='Specify audio format: "best", "aac", "flac", "mp3", '
-                             '"m4a", "opus", "vorbis", or "wav" (default "best")')
+                             '"m4a", "opus", "vorbis", or "wav" (default "mp3")')
 
     parser.add_argument('-d',
                         '--dir',
