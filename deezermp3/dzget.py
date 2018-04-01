@@ -35,9 +35,15 @@ class DeezerMP3(object):
             yield url
 
     def download_playlist(self, url):
-        parts = url.strip().split('/')
-        list_type, playlist_id = parts[-2:]
-
+        # take last 2
+        parts = url.strip().split('/')[-2:]
+        if len(parts) == 2:
+            list_type, playlist_id = parts
+        else:
+            # default playlist type if only id specified
+            list_type = 'playlist'
+            playlist_id = parts[0]
+        # list_type can be 'album' or 'playlist'
         url = os.path.join(API_URL, list_type, playlist_id)
 
         res = requests.get(url)
