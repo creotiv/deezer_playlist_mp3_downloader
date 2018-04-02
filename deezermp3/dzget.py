@@ -64,6 +64,7 @@ class DeezerMP3(object):
             'postprocessors': postprocessors,
             'outtmpl': '%s/%%(title)s.%%(ext)s' % dir_path,
             'format': 'bestaudio/best',
+            'ignoreerrors': True
         }
 
         with YoutubeDL(options) as ydl:
