@@ -17,7 +17,7 @@ class DeezerMP3(object):
         self.regexp_video = re.compile(r'(/watch\?[^\"]+)', re.I | re.M | re.U)
 
     def log(self, data):
-        print(data)
+        print(data.encode('ascii', 'replace'))
 
     def urls_gen(self, data):
         self.log('## Fetching video urls...')
