@@ -1,7 +1,6 @@
 import argparse
 import os
 import re
-from urlparse import urljoin
 
 import requests
 from youtube_dl import YoutubeDL
@@ -45,7 +44,7 @@ class DeezerMP3(object):
             list_type = 'playlist'
             playlist_id = parts[0]
         # list_type can be 'album' or 'playlist'
-        url = urljoin(API_URL, list_type, playlist_id)
+        url = os.path.join(API_URL, list_type, playlist_id).replace('\\', '/')
 
         res = requests.get(url)
         data = res.json()
