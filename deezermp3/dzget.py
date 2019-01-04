@@ -1,37 +1,55 @@
 import argparse
 import os
 import re
-from urlparse import urljoin
 
 import requests
 from youtube_dl import YoutubeDL
 
+from googleapiclient.discovery import build
 
 API_URL = "https://api.deezer.com"
 
 
 class DeezerMP3(object):
-    def __init__(self, dirout=None, quality=5, format="best"):
+    def __init__(self, dirout=None, quality=5, format="best", key=None):
         self.dirout = os.path.realpath(dirout or os.path.join(os.getcwd(), os.path.dirname(__file__)))
         self.quality = quality
         self.format = format
-        self.regexp_video = re.compile(r'(/watch\?[^\"]+)', re.I | re.M | re.U)
+        self.regexp_video = re.compile(r'/watch\?v=([^\"]+)', re.I | re.M | re.U)
+        self.key = key
 
     def log(self, data):
-        print(data)
+        print(data.encode('ascii', 'replace'))
+
+    def youtube_search(self, q, max_results):
+        youtube = build('youtube', 'v3', developerKey=self.key)
+
+        search_response = youtube.search().list(
+            q=q,
+            part='id,snippet',
+            maxResults=max_results
+        ).execute()
+
+        for search_result in search_response.get('items', []):
+            if search_result['id']['kind'] == 'youtube#video':
+                return search_result['id']['videoId']
+
+        return None
 
     def urls_gen(self, data):
         self.log('## Fetching video urls...')
         for item in data['tracks']['data']:
             name = '%s - %s' % (item['artist']['name'], item['title'])
             self.log("## Searching for %s" % name)
-            yres = requests.get('https://m.youtube.com/results?search_query=%s' % name)
-            search_res = yres.content.decode('utf-8')
-            videos = self.regexp_video.findall(search_res)
-            if not videos:
+            if self.key:
+                video = self.youtube_search(name, 10)
+            else:
+                res = requests.get('https://www.youtube.com/results?search_query=%s' % name)
+                video = self.regexp_video.finditer(res.content.decode('utf-8')).next().group(1)
+            if not video:
                 self.log(' > Not found')
                 continue
-            url = "http://www.youtube.com%s" % videos[0]
+            url = "http://www.youtube.com/watch?v=%s" % video
             self.log(' > Url: %s' % url)
             yield url
 
@@ -45,7 +63,7 @@ class DeezerMP3(object):
             list_type = 'playlist'
             playlist_id = parts[0]
         # list_type can be 'album' or 'playlist'
-        url = urljoin(API_URL, list_type, playlist_id)
+        url = os.path.join(API_URL, list_type, playlist_id).replace('\\', '/')
 
         res = requests.get(url)
         data = res.json()
@@ -102,6 +120,11 @@ def get_args():
     parser.add_argument('urls', metavar='urls', type=str, nargs='+',
                         help='Playlist urls or ids')
 
+    parser.add_argument('--developer-key',
+                        metavar='key',
+                        type=str,
+                        help='Specify YouTube developer key')
+
     args = parser.parse_args()
 
     if args.audio_format:
@@ -122,7 +145,8 @@ def main():
     dmp3 = DeezerMP3(
         dirout=args.dir,
         quality=args.audio_quality,
-        format=args.audio_format)
+        format=args.audio_format,
+        key=args.developer_key)
 
     for url in args.urls:
         dmp3.download_playlist(url)
