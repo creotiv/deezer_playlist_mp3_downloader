@@ -49,3 +49,7 @@ Usage
                           Specify ffmpeg/avconv audio quality, insert a value
                           between 0 (better) and 9 (worse) for VBR or a specific
                           bitrate like 128K (default 5)
+
+Support
+=======
+Beside work im trying to help homeless animals, so if you like my work, you can support me https://www.patreon.com/uah
