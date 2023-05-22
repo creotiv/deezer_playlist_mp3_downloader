@@ -1,2 +1,2 @@
-requests==2.22.0
+requests==2.31.0
 youtube-dl==2019.09.01
